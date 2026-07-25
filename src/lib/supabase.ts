@@ -1,9 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Trim stray whitespace and any trailing slashes. A trailing slash on the URL
-// makes the client build "https://xxx.supabase.co//auth/v1/..." (double slash),
-// which Supabase's gateway rejects with "Invalid path specified in request URL".
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim().replace(/\/+$/, '')
+// Normalize the Supabase URL to just its origin (scheme + host). This defends
+// against common paste mistakes — a trailing slash, or an accidental path like
+// ".../rest/v1" — either of which makes the client build a malformed endpoint
+// (e.g. ".../rest/v1/auth/v1/token") that Supabase rejects with
+// "Invalid path specified in request URL".
+function normalizeSupabaseUrl(raw?: string): string | undefined {
+  if (!raw) return raw
+  const trimmed = raw.trim()
+  try {
+    return new URL(trimmed).origin
+  } catch {
+    return trimmed.replace(/\/+$/, '')
+  }
+}
+
+const supabaseUrl = normalizeSupabaseUrl(import.meta.env.VITE_SUPABASE_URL)
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
 
 // True only when both env vars are present. When false, the app shows a
