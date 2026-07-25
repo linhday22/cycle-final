@@ -424,9 +424,16 @@ DROP POLICY IF EXISTS "prefs_delete_self" ON notification_prefs;
 CREATE POLICY "prefs_delete_self" ON notification_prefs FOR DELETE
   TO authenticated USING (user_id = auth.uid());
 
--- Enable realtime for messages and nudges
-ALTER PUBLICATION supabase_realtime ADD TABLE messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE nudges;
+-- Enable realtime for messages and nudges (guarded so this file is re-runnable)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'messages') THEN
+    EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE messages';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'nudges') THEN
+    EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE nudges';
+  END IF;
+END $$;
 
 
 -- ======================================================================
