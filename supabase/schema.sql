@@ -164,6 +164,7 @@ $$;
 
 -- Update profiles SELECT policy to include partner visibility
 DROP POLICY IF EXISTS "profiles_select_own" ON profiles;
+DROP POLICY IF EXISTS "profiles_select_own_or_partner" ON profiles;
 CREATE POLICY "profiles_select_own_or_partner" ON profiles FOR SELECT
   TO authenticated USING (id = auth.uid() OR are_paired(auth.uid(), id));
 
