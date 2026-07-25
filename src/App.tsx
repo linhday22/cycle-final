@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSession, SessionProvider } from '@/components/session-provider'
-import { AuthScreen } from '@/components/auth-screen'
+import { AuthScreen, ResetPasswordScreen } from '@/components/auth-screen'
 import { OnboardingScreen } from '@/components/onboarding-screen'
 import { DashboardScreen } from '@/components/dashboard-screen'
 import { ChatScreen } from '@/components/chat-screen'
@@ -16,7 +16,7 @@ import { Home, MessageCircle, Bell, Gift, Settings } from 'lucide-react'
 type Screen = 'home' | 'chat' | 'notify' | 'gifts' | 'settings'
 
 function AppContent() {
-  const { user, loading, profile } = useSession()
+  const { user, loading, profile, passwordRecovery } = useSession()
   const [screen, setScreen] = useState<Screen>('home')
 
   if (loading) {
@@ -27,6 +27,7 @@ function AppContent() {
     )
   }
 
+  if (passwordRecovery) return <ResetPasswordScreen />
   if (!user) return <AuthScreen />
   if (!profile?.onboarding_complete) return <OnboardingScreen />
 

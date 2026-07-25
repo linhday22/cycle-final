@@ -33,9 +33,12 @@ interface SessionContextValue {
   pairing: Pairing | null
   partnerId: string | null
   loading: boolean
+  passwordRecovery: boolean
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: string | null }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
+  resetPassword: (email: string) => Promise<{ error: string | null }>
+  updatePassword: (password: string) => Promise<{ error: string | null }>
   refreshProfile: () => Promise<void>
   refreshPairing: () => Promise<void>
 }
@@ -54,6 +57,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [pairing, setPairing] = useState<Pairing | null>(null)
   const [loading, setLoading] = useState(true)
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   const partnerId = pairing
     ? pairing.user_a === user?.id ? pairing.user_b : pairing.user_a
@@ -99,7 +103,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
       setSession(s)
       setUser(s?.user ?? null)
       if (s?.user) {
@@ -138,10 +143,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setPairing(null)
   }
 
+  async function resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    })
+    if (error) return { error: error.message }
+    return { error: null }
+  }
+
+  async function updatePassword(password: string) {
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) return { error: error.message }
+    setPasswordRecovery(false)
+    return { error: null }
+  }
+
   return (
     <SessionContext.Provider value={{
-      session, user, profile, pairing, partnerId, loading,
-      signUp, signIn, signOut, refreshProfile, refreshPairing
+      session, user, profile, pairing, partnerId, loading, passwordRecovery,
+      signUp, signIn, signOut, resetPassword, updatePassword, refreshProfile, refreshPairing
     }}>
       {children}
     </SessionContext.Provider>
