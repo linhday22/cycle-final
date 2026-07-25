@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Toaster } from '@/components/ui/sonner'
 import { GiftScreen } from '@/components/gift-screen'
 import { NotificationListener } from '@/components/notification-listener'
+import { isSupabaseConfigured } from '@/lib/supabase'
 import { Home, MessageCircle, Bell, Gift, Settings } from 'lucide-react'
 
 type Screen = 'home' | 'chat' | 'notify' | 'gifts' | 'settings'
@@ -70,7 +71,30 @@ function AppContent() {
   )
 }
 
+function ConfigNeeded() {
+  return (
+    <div className="flex min-h-svh items-center justify-center p-6">
+      <div className="w-full max-w-md rounded-3xl border border-border/50 bg-card p-6 shadow-sm space-y-4">
+        <h1 className="text-xl font-bold">almost there 🛠️</h1>
+        <p className="text-sm text-muted-foreground">
+          This app can't reach its backend because the Supabase environment variables aren't set.
+        </p>
+        <div className="rounded-2xl bg-muted/60 p-4 text-sm space-y-1">
+          <p className="font-medium">Add these in Vercel → Settings → Environment Variables, then redeploy:</p>
+          <p className="font-mono text-xs mt-2">VITE_SUPABASE_URL</p>
+          <p className="font-mono text-xs">VITE_SUPABASE_ANON_KEY</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Both come from your Supabase project → Project Settings → API. Vite reads env vars at build time, so you must
+          <span className="font-medium"> redeploy </span> after adding them.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function App() {
+  if (!isSupabaseConfigured) return <ConfigNeeded />
   return (
     <SessionProvider>
       <AppContent />
